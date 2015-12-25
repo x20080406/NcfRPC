@@ -1,0 +1,136 @@
+//所有项目都要包含这个文件在顶部
+
+// 定义一堆基础插件
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: "maven-publish"
+
+// 配置
+configurations {
+    all*.exclude group: "commons-logging"
+}
+
+repositories {
+    //mavenLocal()          // 启用local
+    maven {
+        url mavenRepoUrl    // 启用私服
+    }
+    mavenCentral()          // 定义仓库为maven中心仓库
+}
+
+// checkstyle config文件地址
+/*checkstyle {
+    configFile = file("$rootDir/cfg/checkstyle/checkstyle.xml")
+}*/
+/*
+
+findbugs {
+    sourceSets = [sourceSets.main]
+    effort = "max"
+    reportLevel = "high"
+}
+*/
+
+compileJava {
+    options.compilerArgs = ["-g", "-Xlint:none"] //加入DEBUG INFO
+}
+
+build {
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+}
+
+// 额外增加source path，不需要去拷贝文件。
+// 这种方式是最好的，但idea刷新时要报错，不允许加载模块项目以外的目录到sourceSets里！！！
+/*sourceSets {
+    main.resources.srcDirs += "$rootDir/cfg/profiles/${profile}"
+    main {resources{srcDir("$rootDir/cfg/profiles/${profile}")}}
+}*/
+task app_copyProperties << {
+    copy {
+        from "$rootDir/cfg/profiles/${profile}"
+        from "$rootDir/cfg/spring"
+        from "$rootDir/cfg/springmvc"
+        into "$sourceSets.main.output.resourcesDir"
+    }
+}
+
+task app_copyDependencies(type: Copy) {
+    into "$buildDir/output/libs"
+    from configurations.compile
+}
+
+task app_sourcesJar(type: Jar) {
+    archiveName = "$project.name-$version-sources.jar"
+    description = 'Jar from src/main/java'
+    destinationDir = file("$buildDir/libs")
+    classifier 'sources'
+    from sourceSets.main.allJava
+}
+
+//公共build，不执行jacoco,pmd,findbug,checkstyle
+task app_build(dependsOn: ["clean", "compileJava", "processResources", "compileTestJava", "processTestResources"]) {
+    description "公共build，不执行jacoco,pmd,findbug,checkstyle"
+}
+
+tasks.withType(org.gradle.api.tasks.compile.JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+/**
+ * 打印当前项目的src目录
+ */
+task app_printSourceSet << {
+    sourceSets.all { set ->
+        set.allSource.srcDirs.each { dir ->
+            println dir
+        }
+    }
+}
+
+/**
+ * 创建约定的SRC目录
+ */
+task app_createSourceFolder << {
+    sourceSets.all { set ->
+        set.allSource.srcDirs.each {
+            if( !it.exists() )
+                it.mkdirs()
+            else
+                logger.info("{}:{}已存在",rootProject.name, it.absolutePath)
+        }
+    }
+}
+
+//publish
+
+publishing {
+    publications {
+        plugin(MavenPublication) {
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                configurations.compile.allDependencies.each {
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', it.group)
+                    dependencyNode.appendNode('artifactId', it.name)
+                    dependencyNode.appendNode('version', it.version)
+                }
+            }
+            groupId group
+            artifactId = "$project.name"
+            artifact app_sourcesJar
+            artifact jar
+        }
+    }
+    repositories {
+        maven {
+            url mavenRepoUploadUrl
+            credentials {
+                username = mavenRepoUserName
+                password = mavenRepoPassword
+            }
+        }
+    }
+}

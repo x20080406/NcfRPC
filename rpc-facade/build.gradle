@@ -1,0 +1,5 @@
+
+apply from: "$rootDir/include.gradle"
+dependencies{
+    compile project(':rpc-common')
+}

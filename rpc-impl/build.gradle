@@ -1,0 +1,96 @@
+apply from: "$rootDir/include.gradle"
+apply plugin: "application"
+applicationName = appName
+mainClassName = bootstrapClass
+
+def vmLogDir = "_HOME_DIR_"
+//def JVM_DEBUG -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=4001
+def JVM_HEAP = "-server -Xms512m -Xmx512m"
+def JVM_GC_COLLECTOR = "-XX:+DisableExplicitGC -XX:+UseConcMarkSweepGC -XX:+UseParNewGC"
+///不能换行，windows下会有问题
+def JVM_GC_LOG = "-XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps -Xloggc:${vmLogDir}/${applicationName}.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${vmLogDir}/"
+applicationDefaultJvmArgs = ["$JVM_HEAP $JVM_GC_COLLECTOR $JVM_GC_LOG"]
+
+test {
+    jvmArgs '-Xmx512m', '-Xms512m','-Dss=true', '-Dhosts=127.0.0.1:23432'
+//    jvmArgs '-Dss=false','-Dhosts=127.0.0.1:23432'
+}
+
+/**
+ *  对最终的配置文件进行修改
+ */
+startScripts {
+    classpath += files('config')
+    doLast {
+        def windowsScriptFile = file getWindowsScript()
+        def unixScriptFile = file getUnixScript()
+        windowsScriptFile.text = windowsScriptFile.text.replace('%APP_HOME%\\lib\\config', '%APP_HOME%\\config')
+        windowsScriptFile.text = windowsScriptFile.text.replace(vmLogDir, '%~dp0')
+        windowsScriptFile.text = windowsScriptFile.text.replace('\'"', '\'').replace('"\'', "\'").replace("%DEFAULT_JVM_OPTS% ", "\"%DEFAULT_JVM_OPTS%\"")
+        //将配置文件加入到启动文件中的classpath里并去掉lib目录
+        unixScriptFile.text = unixScriptFile.text.replace('$APP_HOME/lib/config', '$APP_HOME/config')
+        //将配置文件中的lib目录去掉
+        unixScriptFile.text = unixScriptFile.text.replace(vmLogDir, "\$HOME")
+        //将配置文件中的'"替换为'
+        unixScriptFile.text = unixScriptFile.text.replace('\'"', '\'').replace('"\'', "\'")
+    }
+}
+
+/**
+ * 删除编译好的目录
+ */
+task app_cleanDistribution(dependsOn: clean) << {
+    def distDir = file(buildDir.getParent() + "/dist")
+    if (distDir.exists()) {
+        delete distDir.listFiles()
+    }
+}
+
+/**
+ * 编译可执行的服务器
+ */
+task app_buildServer(dependsOn: ['app_cleanDistribution',
+                                 'app_build',
+                                 'startScripts',
+                                 'app_copyDependencies']) << {
+    copy {
+        from "${buildDir}/libs"
+        from "$buildDir/output/libs"
+        into "${buildDir}/dist/$applicationName/lib"
+    }
+
+    copy {
+        from "$buildDir/scripts"
+        into "build/dist/$applicationName/bin"
+    }
+
+    copy {
+        from "$rootDir/cfg/profiles/${profile}"
+        from "$rootDir/cfg/spring"
+        from "$rootDir/cfg/springmvc"
+
+        from "${sourceSets.main.output.resourcesDir}"
+        into "${buildDir}/dist/$applicationName/config"
+    }
+
+    println "编译结果${profile}：${buildDir}/dist/$applicationName"
+}
+
+app_buildServer.shouldRunAfter app_cleanDistribution
+
+task app_buildServerZip(type: Zip, dependsOn: app_buildServer) {
+    from "$buildDir/dist/$applicationName"
+}
+
+dependencies {
+    compile project(":rpc-facade")
+    compile project(":rpc-common")
+    compile project(":rpc-server")
+    compile libs.slf4j_impl
+
+    testCompile project(":rpc-client")
+    testCompile libs.test
+    //compile libs.mybatis
+    compile libs.db
+    compile libs.redis
+}

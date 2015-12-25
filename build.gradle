@@ -1,0 +1,14 @@
+//apply plugin: 'java'
+//加载配置文件
+def dependsScriptFile = file("cfg/gradle/dependencies.gradle")
+def configScriptFile = file("cfg/gradle/config.gradle")
+if (dependsScriptFile.exists()) {
+    apply from: dependsScriptFile
+}
+if (configScriptFile.exists()) {
+    apply from: configScriptFile
+}
+allprojects {
+}
+subprojects {
+}

@@ -1,0 +1,18 @@
+//apply from: "inc.gradle"
+// 定义项目属性
+description = """gradle config file"""
+
+ext {
+    //设置环境
+    if (project.hasProperty('profile')) {
+        if(file("$rootDir/cfg/profiles/$profile").exists()){
+            logger.warn ("{}:profile设置为[${profile}]", project.name)
+            profile = project['profile']
+            return
+        }else{
+            logger.error ("{}:指定的profile[${profile}]不存在，请检查$rootDir/cfg/profiles", project.name)
+        }
+    }
+    logger.warn ("{}:profile设置为默认的dev", project.name)
+    profile = "dev"
+}

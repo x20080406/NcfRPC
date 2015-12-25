@@ -1,0 +1,33 @@
+<configuration scan="true" scanPeriod="10 seconds" debug="false">
+	<property name="maxFileSize" value="1MB" />
+	<property name="conversionPattern" value="%n%-5level %d %thread %logger[%line]: %n%m%n" />
+	<!-- <property name="logRootDir" value="/home/samp/tomcats/tomcat9110/logs/fzs-open" /> -->	<!-- 配根目录 -->
+	<property name="rootFileName" value="FZS-RPC-third" />                 <!-- 非本项目的日志文件名 -->
+	<property name="appFileName" value="FZS-RPC" />												<!-- 本项目的日志文件名 -->
+
+	<property name="appPackage" value="rpc" />							<!-- 不用修改 -->
+
+	<property name="rootLevel" value="INFO" />                          <!-- 非本项目的日志级别 -->
+	<property name="appLevel" value="DEBUG" />													<!-- 本项目的日志级别 -->
+
+	<contextName>NcfRPC</contextName>        			           	          	<!-- 本项目的名字 -->
+
+	<!-- 日志打印到console中 -->
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder charset="UTF-8">
+			<pattern>${conversionPattern}</pattern>
+		</encoder>
+	</appender>
+
+
+	<!-- 根目录的日志配置 -->
+	<root level="${rootLevel}">
+		<appender-ref ref="console" />
+	</root>
+
+	<!-- app package -->
+	<logger name="${appPackage}" level="${appLevel}" additivity="false">
+		<appender-ref ref="console" />
+	</logger>
+
+</configuration>

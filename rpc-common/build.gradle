@@ -1,0 +1,22 @@
+
+apply from : "$rootDir/include.gradle"
+
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile libs.netty
+    compile libs.annotation_detector
+    compile libs.slf4j_api
+    compile libs.guava
+    compile libs.util
+    compile libs.serializer
+    compile libs.pojo_mbean
+//    compile libs.thirdparty
+
+    testCompile libs.slf4j_impl
+    testCompile libs.test
+
+}

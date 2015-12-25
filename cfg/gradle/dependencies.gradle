@@ -1,0 +1,89 @@
+//http://stackoverflow.com/questions/9547170/in-gradle-how-do-i-declare-common-dependencies-in-a-single-place
+//http://tech.meituan.com/gradle-practice.html
+
+description = """gradle dependencies config file"""
+ext.libs = [
+        netty              : ["io.netty:netty-all:4.0.26.Final"],
+        spring_core        : ["org.aspectj:aspectjweaver:1.7.2",
+                              "cglib:cglib-nodep:3.1",
+                              dependencies.create("org.springframework:spring-core:${springversion}") {
+                                  exclude group: "commons-logging", module: "commons-logging"
+                              }, "org.springframework:spring-aop:${springversion}",
+                              "org.springframework:spring-beans:${springversion}",
+                              "org.springframework:spring-tx:${springversion}",
+                              "org.springframework:spring-context:${springversion}",
+                              "org.springframework:spring-context-support:${springversion}",
+                              "org.springframework:spring-expression:${springversion}",
+                              "org.springframework:spring-jdbc:${springversion}",
+                              "org.springframework:spring-oxm:${springversion}"
+
+        ],
+        spring_mvc         : ["org.springframework:spring-web:${springversion}",
+                              "org.springframework:spring-webmvc:${springversion}"
+        ],
+        spring_data        : ["org.springframework.data:spring-data-redis:1.5.0.RELEASE"],
+        slf4j_api          : "org.slf4j:slf4j-api:${slf4jversion}",//项目编写时仅需slfjapi，开发时将slfj_impl以testCompile形式加入到编译环境即可
+        slf4j_impl         : ["ch.qos.logback:logback-classic:1.0.13",
+                              "org.slf4j:jcl-over-slf4j:${slf4jversion}",
+                              "org.slf4j:jul-to-slf4j:${slf4jversion}",
+                              "org.slf4j:log4j-over-slf4j:${slf4jversion}",
+        ],
+        //mybatis
+        mybatis            : ["org.mybatis:mybatis:${mybatisversion}",
+                              "org.mybatis:mybatis-spring:${mybatisspringversion}",
+                              dependencies.create("org.mybatis.caches:mybatis-ehcache:1.0.3") {
+                                  exclude group: "net.sf.ehcache"
+                                  force = true
+                              }
+        ],
+        j2ee               : ["javax.servlet:javax.servlet-api:3.0.1",
+                              "javax.servlet.jsp:jsp-api:2.2",
+                              "javax.el:javax.el-api:2.2.4",
+        ],
+        view               : ["jstl:jstl:1.2",//试图相关
+                              "com.thoughtworks.xstream:xstream:1.4.3",
+                              "com.fasterxml.jackson.core:jackson-core:2.5.4",
+                              "com.fasterxml.jackson.core:jackson-databind:2.5.4",
+                              "com.fasterxml.jackson.core:jackson-annotations:2.5.4",
+//                      "org.codehaus.jackson:jackson-mapper-asl:1.9.2", //spring4已经不支持jackson1
+//                      "org.codehaus.jackson:jackson-xc:1.9.2",
+        ],
+        guava              : ["com.google.guava:guava:18.0",//谷歌工具类库
+                              "com.google.code.findbugs:jsr305:3.0.0"],
+
+        util               : ["org.apache.commons:commons-collections4:4.0",//工具类库
+                              "org.apache.commons:commons-lang3:3.3.1",
+                              "commons-fileupload:commons-fileupload:1.3",
+                              dependencies.create("net.sf.dozer:dozer:5.4.0") {
+                                  exclude group: "org.slf4j"
+                                  force = true
+                              }
+        ],
+        cli                : 'commons-cli:commons-cli:1.2',
+        file               : ["org.apache.poi:poi:3.10.1"],//文件操作
+        cache              : ["net.sf.ehcache:ehcache-core:2.6.0"],//缓存
+        shiro              : ["org.apache.shiro:shiro-core:1.2.3",//权限框架
+                              "org.apache.shiro:shiro-web:1.2.3",
+                              "org.apache.shiro:shiro-spring:1.2.3",
+                              dependencies.create("org.apache.shiro:shiro-ehcache:1.2.3") {
+                                  exclude group: "net.sf.ehcache"
+                                  force = true
+                              }
+        ],
+        annotation_detector: "eu.infomas:annotation-detector:3.0.4",
+        pojo_mbean         : "org.softee:pojo-mbean:1.1",
+        redis              : ["redis.clients:jedis:2.6.3"],//nosql-redis客户端
+        serializer         : ["com.caucho:hessian:4.0.38",
+                              "com.esotericsoftware:kryo:3.0.3"],//hessian（用来序列化数据）
+        velocity           : ["org.apache.velocity:velocity:1.7"],//velocity模板
+
+        email              : "javax.mail:mail:1.4.7",//javamail
+        db                 : ["mysql:mysql-connector-java:5.1.33",//mysql驱动
+                              "com.mchange:c3p0:0.9.5.1"],//连接池
+        captcha            : ["net.pusuo:patchca:0.5.0"],//验证码
+        test               : ["junit:junit:4.10",
+                              "org.springframework:spring-test:${springversion}"
+        ]//,
+        //thirdparty         : ["com.esms:postmsg-ump:2.4"//玄武短信
+        //]
+]

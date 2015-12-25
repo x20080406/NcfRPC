@@ -1,0 +1,11 @@
+//version = 0.3
+apply from : "$rootDir/include.gradle"
+
+dependencies{
+    compile project(":rpc-common")
+    compile libs.netty
+    compile libs.annotation_detector
+    compile libs.slf4j_api
+    compile libs.util
+    testCompile libs.slf4j_impl
+}
